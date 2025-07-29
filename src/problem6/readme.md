@@ -1,119 +1,146 @@
-# Scoreboard API Service
-
-## Overview
-
-The Scoreboard API Service is a backend application server designed to manage and display the top 10 user scores on a website. This module ensures real-time updates to the scoreboard and secures the score update mechanism to prevent unauthorized actions.
-
-## Features
-
-1. **Real-Time Score Updates**: Live updates to the scoreboard whenever a user's score is updated.
-2. **Top 10 Scores**: The scoreboard displays the top 10 user scores.
-3. **Secure Score Update**: Ensures that only authorized actions can update user scores.
-
-## API Endpoints
-
-### 1. Update User Score
-
--   **Endpoint**: `/api/update-score`
--   **Method**: `POST`
--   **Description**: Updates the user's score upon completion of an action.
--   **Request Headers**:
-    -   `Authorization`: Bearer token for user authentication.
--   **Request Body**:
-    ```json
-    {
-        "userId": "string",
-        "scoreIncrement": "number"
-    }
-    ```
--   **Response**:
--   `200 OK`:
-    ```json
-    {
-      "status": "success",
-      "newScore": "number"
-    }
-    ```
--   `401 Unauthorized`:
-    ```json
-    {
-      "status": "error",
-      "message": "Unauthorized"
-    }
-    ```
--   `400 Bad Request`:
-    ```json
-    {
-      "status": "error",
-      "message": "Invalid request parameters"
-    }
-    ```
-
-## WebSocket Endpoint
-
-### 2. Get Top Scores (WebSocket)
-
--   **Endpoint**: `/ws/top-scores`
--   **Description**: Provides real-time updates of the top 10 user scores.
--   **Client Connection**: Clients connect to the WebSocket endpoint to receive updates.
--   **Message Format**:
--   **Server to Client**:
-    ```json
-    {
-      "type": "topScoresUpdate",
-      "topScores": [
-        {
-          "userId": "string",
-          "score": "number"
-        },
-        ...
-      ]
-    }
-    ```
-
-## Database Schema
-
-### Users Table
-
-| Column | Type   | Description                |
-| ------ | ------ | -------------------------- |
-| id     | string | Unique identifier for user |
-| score  | number | Current score of the user  |
-
-## Flow of Execution
-
-![Flow Diagram](./flow-diagram.png)
-
-## Security Measures
-
-1. **Authorization Token**: All score update requests must include a valid authorization token.
-2. **Input Validation**: Validate all incoming request parameters to prevent SQL injection and other attacks.
-3. **Rate Limiting**: Implement rate limiting to prevent abuse of the score update endpoint.
-
-## Improvements
-
-1. **Caching**: Use caching (e.g., Redis) for frequently accessed data like top scores to reduce database load.
-2. **Detailed Logging**: Add detailed logging for monitoring and debugging purposes.
-3. **Unit Tests**: Implement unit tests for all endpoints to ensure code quality and reliability.
-4. **CI/CD Integration**: Integrate with CI/CD pipelines for automated testing and deployment.
-
-## Contributors
-
--   [Nguyen Cung Ung](https://github.com/stilllove1511)
+## 📘 DETAILED SPEC: REALTIME LEADERBOARD SYSTEM
 
 ---
 
-## Flow Diagram
+### ✅ Goal
 
-```mermaid
-graph TD
-    A[User Action] -->|Triggers API Call| B[POST /api/update-score]
-    B --> C{Authorized?}
-    C -->|Yes| D[Validate Request]
-    D --> E[Update User Score in DB]
-    E --> F[Check if Top 10]
-    F -->|Yes| G[Broadcast Update via WebSocket]
-    C -->|No| I[Return 401 Unauthorized]
+Build a realtime leaderboard system with two services:
+
+* **Increment Service**: records user scores
+* **View Board Service**: provides realtime leaderboard data via SSE
+
+---
+
+## 🔧 1. Architecture Overview
+### Architecture Diagram
+
+![Architecture Diagram](Whiteboard.png)
+
+---
+
+## 📦 2. System Components
+
+### 2.1 Database
+
+* **Persistent Storage**: stores full user score data
+* **Atomic Updates**: ensures consistency when updating scores
+
+### 2.2 Redis
+
+* **Sorted Set**: stores top N scores (`ZADD leaderboard <score> <userId>`)
+* **Pub/Sub**: publishes `"leaderboard:updated"` messages with top N data
+* **Single Threaded**: Redis is single-threaded, so operations are atomic
+
+### 2.3 Increment Service
+
+* Accepts score submissions via HTTP POST
+* Authenticates user via JWT or bearer token
+* Updates user score in the database
+* Compares the updated score with the smallest score in the Redis Sorted Set
+* If the updated score qualifies for the top N, updates the Redis Sorted Set and publishes a JSON message to Redis Pub/Sub
+
+### 2.4 View Board Service
+
+* Subscribes to Redis Pub/Sub channel `"leaderboard:updated"`
+* Maintains SSE connection to clients
+* Pushes updates to connected clients upon receiving Pub/Sub message
+
+### 2.5 Client
+
+* Submits score updates (if player)
+* Connects to View Board SSE endpoint to receive realtime leaderboard
+
+---
+
+## 🔐 3. Authentication
+
+* **Increment Service**: requires Bearer token (JWT)
+* Middleware extracts `userId` from token
+* View Board SSE endpoint may be public or protected depending on use case
+
+---
+
+## 💻 4. API Specification
+
+### 4.1 POST /score
+
+Submit a new user score
+
+* **URL**: `/score`
+* **Method**: POST
+* **Auth**: Bearer Token
+* **Request Body**:
+
+```json
+{
+  "score": 1234
+}
 ```
 
-This diagram illustrates the flow of execution from a user action triggering an API call to updating the score in the database and broadcasting the update if necessary.
+* **Response**:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+* **Internal Flow**:
+
+  * Authenticate and extract `userId`
+  * Update the user's score in the database
+  * Compare the updated score with the smallest score in the Redis Sorted Set
+  * If the updated score qualifies for the top N:
+  * Update the Redis Sorted Set
+  * Publish a change event to Redis Pub/Sub
+
+---
+
+### 4.2 GET /events
+
+Connect via SSE to receive realtime leaderboard updates
+
+* **URL**: `/events`
+* **Method**: GET
+* **Headers**:
+
+  * `Accept: text/event-stream`
+* **SSE Response Format**:
+
+```
+data: { "type": "update", "top": [["user123", "1500"], ["user456", "1400"]] }
+```
+
+---
+
+## 🧠 5. Redis Pub/Sub Message Format
+
+```json
+{
+  "type": "update",
+  "updatedUser": "user123",
+  "newScore": 1500,
+  "top": [
+  ["user123", "1500"],
+  ["user456", "1400"]
+  ]
+}
+```
+
+---
+
+## 🚀 6. Autoscaling
+
+* Both services are stateless and can scale horizontally:
+
+  * **Increment Service**: stateless, scalable
+  * **View Board Service**: multiple instances subscribe to Pub/Sub and stream via SSE
+* Redis Pub/Sub supports basic fan-out to all subscribers
+
+---
+
+## 🛠️ 7. Future Improvements
+
+* Replace Redis Pub/Sub with **Redis Streams** or **Kafka** for durability and message replay
+* Cache top N to reduce Redis reads under high traffic
+* Optimize database queries for high write throughput
