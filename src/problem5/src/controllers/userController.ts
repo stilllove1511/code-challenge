@@ -17,10 +17,10 @@ export class UserController {
         data: users
       });
     } catch (error) {
+      console.error('Error fetching users:', error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching users',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error fetching users'
       });
     }
   };
@@ -48,10 +48,10 @@ export class UserController {
         data: user
       });
     } catch (error) {
+      console.error('Error fetching user:', error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching user',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error fetching user'
       });
     }
   };
@@ -82,10 +82,10 @@ export class UserController {
         data: user
       });
     } catch (error) {
+      console.error('Error creating user:', error);
       res.status(500).json({
         success: false,
-        message: 'Error creating user',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error creating user'
       });
     }
   };
@@ -128,10 +128,10 @@ export class UserController {
         data: user
       });
     } catch (error) {
+      console.error('Error updating user:', error);
       res.status(500).json({
         success: false,
-        message: 'Error updating user',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error updating user'
       });
     }
   };
@@ -161,10 +161,10 @@ export class UserController {
         message: 'User deleted successfully'
       });
     } catch (error) {
+      console.error('Error deleting user:', error);
       res.status(500).json({
         success: false,
-        message: 'Error deleting user',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error deleting user'
       });
     }
   };

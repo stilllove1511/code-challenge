@@ -17,10 +17,10 @@ export class PostController {
         data: posts
       });
     } catch (error) {
+      console.error('Error fetching posts:', error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching posts',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error fetching posts'
       });
     }
   };
@@ -48,10 +48,10 @@ export class PostController {
         data: post
       });
     } catch (error) {
+      console.error('Error fetching post:', error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching post',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error fetching post'
       });
     }
   };
@@ -79,10 +79,10 @@ export class PostController {
         data: post
       });
     } catch (error) {
+      console.error('Error creating post:', error);
       res.status(500).json({
         success: false,
-        message: 'Error creating post',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error creating post'
       });
     }
   };
@@ -119,10 +119,10 @@ export class PostController {
         data: post
       });
     } catch (error) {
+      console.error('Error updating post:', error);
       res.status(500).json({
         success: false,
-        message: 'Error updating post',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error updating post'
       });
     }
   };
@@ -152,10 +152,10 @@ export class PostController {
         message: 'Post deleted successfully'
       });
     } catch (error) {
+      console.error('Error deleting post:', error);
       res.status(500).json({
         success: false,
-        message: 'Error deleting post',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error deleting post'
       });
     }
   };
@@ -176,10 +176,10 @@ export class PostController {
         data: posts
       });
     } catch (error) {
+      console.error('Error fetching posts by author:', error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching posts by author',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error fetching posts by author'
       });
     }
   };
@@ -192,10 +192,10 @@ export class PostController {
         data: posts
       });
     } catch (error) {
+      console.error('Error fetching published posts:', error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching published posts',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'Error fetching published posts'
       });
     }
   };
