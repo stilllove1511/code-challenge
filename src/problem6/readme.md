@@ -92,7 +92,12 @@ Submit a new user score
   * Compare the updated score with the smallest score in the Redis Sorted Set
   * If the updated score qualifies for the top N:
   * Update the Redis Sorted Set
-  * Publish a change event to Redis Pub/Sub
+  ### Internal Flow Diagram
+
+  Refer to the following diagram for the internal flow of the `POST /score` endpoint:
+
+  ![Update Score Flow](update-score.png)
+
 
 ---
 
@@ -110,6 +115,12 @@ Connect via SSE to receive realtime leaderboard updates
 ```
 data: { "type": "update", "top": [["user123", "1500"], ["user456", "1400"]] }
 ```
+
+### Internal Flow Diagram for View Board Service
+
+Refer to the following diagram for the internal flow of the `GET /events` endpoint:
+
+![View Board Flow](view-board.png)
 
 ---
 
