@@ -1,152 +1,144 @@
-# Express TypeScript CRUD API
+# Simple CRUD API
 
-This is a simple ExpressJS CRUD API built with TypeScript.
+A simple CRUD application built with TypeScript, Express.js, SQLite, and Prisma ORM following a layered architecture pattern.
+
+## Tech Stack
+
+- **TypeScript** - Type-safe JavaScript
+- **Express.js** - Web framework
+- **SQLite** - Database
+- **Prisma** - ORM and database toolkit
+- **Node.js** - Runtime environment
+
+## Architecture
+
+The application follows a layered architecture pattern:
+
+```
+src/
+├── config/         # Database configuration
+├── controllers/    # HTTP request handlers (Controller layer)
+├── services/       # Business logic (Service layer)
+├── routes/         # Route definitions (Router layer)
+├── types/          # TypeScript type definitions
+└── index.ts        # Application entry point
+```
 
 ## Features
 
--   Create a resource
--   List resources with basic filters
--   Get details of a resource
--   Update resource details
--   Delete a resource
+### Users CRUD
+- `GET /api/users` - Get all users
+- `GET /api/users/:id` - Get user by ID
+- `POST /api/users` - Create new user
+- `PUT /api/users/:id` - Update user
+- `DELETE /api/users/:id` - Delete user
 
-## Requirements
+### Posts CRUD
+- `GET /api/posts` - Get all posts
+- `GET /api/posts/:id` - Get post by ID
+- `GET /api/posts/published` - Get published posts
+- `GET /api/posts/author/:authorId` - Get posts by author
+- `POST /api/posts` - Create new post
+- `PUT /api/posts/:id` - Update post
+- `DELETE /api/posts/:id` - Delete post
 
--   Node.js v20.14.0
--   npm
+### Additional Endpoints
+- `GET /` - API information
+- `GET /api/health` - Health check
 
-## Setup
+## Setup Instructions
 
-1. Install dependencies:
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-    ```bash
-    npm install
+2. **Generate Prisma client**
+   ```bash
+   npm run db:generate
+   ```
 
-    ```
+3. **Run database migrations**
+   ```bash
+   npm run db:migrate
+   ```
 
-2. Initialize the database:
-   Open SQLite command line tool and execute
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
 
-    ```sql
-    CREATE TABLE resources (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        description TEXT NOT NULL
-    );
+5. **Build for production**
+   ```bash
+   npm run build
+   npm start
+   ```
 
-    ```
+## Environment Variables
 
-3. Start the server:
-    ```bash
-    npm run start
-    ```
+Create a `.env` file in the root directory:
 
-The server will run on http://localhost:3000.
+```env
+DATABASE_URL="file:./dev.db"
+PORT=3000
+NODE_ENV=development
+```
 
-4. Use the API:
-   Copy this JSON and import it in Postman to test the API
-    ```json
-    {
-        "info": {
-            "_postman_id": "4e3919ae-5c68-4776-b56c-c4f89ef151cd",
-            "name": "Express TypeScript CRUD API",
-            "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-            "_exporter_id": "26503484"
-        },
-        "item": [
-            {
-                "name": "Create Resource",
-                "request": {
-                    "method": "POST",
-                    "header": [],
-                    "body": {
-                        "mode": "raw",
-                        "raw": "{\n  \"name\": \"Resource Name\",\n  \"description\": \"Resource Description\"\n}",
-                        "options": {
-                            "raw": {
-                                "language": "json"
-                            }
-                        }
-                    },
-                    "url": {
-                        "raw": "http://localhost:3000/resources",
-                        "protocol": "http",
-                        "host": ["localhost"],
-                        "port": "3000",
-                        "path": ["resources"]
-                    }
-                },
-                "response": []
-            },
-            {
-                "name": "List Resources",
-                "request": {
-                    "method": "GET",
-                    "header": [],
-                    "url": {
-                        "raw": "http://localhost:3000/resources",
-                        "protocol": "http",
-                        "host": ["localhost"],
-                        "port": "3000",
-                        "path": ["resources"]
-                    }
-                },
-                "response": []
-            },
-            {
-                "name": "Get Resource by ID",
-                "request": {
-                    "method": "GET",
-                    "header": [],
-                    "url": {
-                        "raw": "http://localhost:3000/resources/1",
-                        "protocol": "http",
-                        "host": ["localhost"],
-                        "port": "3000",
-                        "path": ["resources", "1"]
-                    }
-                },
-                "response": []
-            },
-            {
-                "name": "Update Resource",
-                "request": {
-                    "method": "PUT",
-                    "header": [],
-                    "body": {
-                        "mode": "raw",
-                        "raw": "{\n  \"name\": \"Updated Resource Name\",\n  \"description\": \"Updated Resource Description\"\n}",
-                        "options": {
-                            "raw": {
-                                "language": "json"
-                            }
-                        }
-                    },
-                    "url": {
-                        "raw": "http://localhost:3000/resources/1",
-                        "protocol": "http",
-                        "host": ["localhost"],
-                        "port": "3000",
-                        "path": ["resources", "1"]
-                    }
-                },
-                "response": []
-            },
-            {
-                "name": "Delete Resource",
-                "request": {
-                    "method": "DELETE",
-                    "header": [],
-                    "url": {
-                        "raw": "http://localhost:3000/resources/1",
-                        "protocol": "http",
-                        "host": ["localhost"],
-                        "port": "3000",
-                        "path": ["resources", "1"]
-                    }
-                },
-                "response": []
-            }
-        ]
-    }
-    ```
+## API Usage Examples
+
+### Create a User
+```bash
+curl -X POST http://localhost:3000/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "John Doe", "email": "john@example.com"}'
+```
+
+### Get All Users
+```bash
+curl http://localhost:3000/api/users
+```
+
+### Create a Post
+```bash
+curl -X POST http://localhost:3000/api/posts \
+  -H "Content-Type: application/json" \
+  -d '{"title": "My First Post", "content": "Hello World!", "published": true, "authorId": 1}'
+```
+
+### Get All Posts
+```bash
+curl http://localhost:3000/api/posts
+```
+
+## Database Schema
+
+### Users Table
+- `id` - Auto-incrementing primary key
+- `email` - Unique email address
+- `name` - User's name
+- `createdAt` - Timestamp when created
+- `updatedAt` - Timestamp when last updated
+
+### Posts Table
+- `id` - Auto-incrementing primary key
+- `title` - Post title
+- `content` - Post content (optional)
+- `published` - Boolean flag for published status
+- `authorId` - Foreign key to users table
+- `createdAt` - Timestamp when created
+- `updatedAt` - Timestamp when last updated
+
+## Development
+
+- Use `npm run dev` for development with hot reloading
+- Use `npm run db:studio` to open Prisma Studio for database management
+- All API responses follow a consistent format with `success`, `data`/`message`, and optional `error` fields
+
+## Error Handling
+
+The API includes comprehensive error handling:
+- Input validation
+- Database constraint violations
+- 404 for not found resources
+- 500 for server errors
+- Proper HTTP status codes
