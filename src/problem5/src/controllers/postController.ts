@@ -1,202 +1,127 @@
-import { Request, Response } from 'express';
-import { PostService } from '../services/postService';
-import { CreatePostDto, UpdatePostDto } from '../types';
+import { Request, Response, NextFunction } from 'express'
+import { PostService } from '../services/postService'
+import { CreatePostDto, UpdatePostDto } from '../types'
+import * as response from '../utils/response'
 
 export class PostController {
-  private postService: PostService;
+    private postService: PostService
 
-  constructor() {
-    this.postService = new PostService();
-  }
-
-  getAllPosts = async (req: Request, res: Response) => {
-    try {
-      const posts = await this.postService.getAllPosts();
-      res.json({
-        success: true,
-        data: posts
-      });
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error fetching posts'
-      });
+    constructor() {
+        this.postService = new PostService()
     }
-  };
 
-  getPostById = async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid post ID'
-        });
-      }
-
-      const post = await this.postService.getPostById(id);
-      if (!post) {
-        return res.status(404).json({
-          success: false,
-          message: 'Post not found'
-        });
-      }
-
-      res.json({
-        success: true,
-        data: post
-      });
-    } catch (error) {
-      console.error('Error fetching post:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error fetching post'
-      });
+    getAllPosts = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const posts = await this.postService.getAllPosts()
+            return response.ok(res, posts)
+        } catch (err) {
+            next(err)
+        }
     }
-  };
 
-  createPost = async (req: Request, res: Response) => {
-    try {
-      const { title, content, published, authorId }: CreatePostDto = req.body;
+    getPostById = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const id = parseInt(req.params.id)
+            if (isNaN(id)) return response.badRequest(res, 'Invalid post ID')
 
-      if (!title || !authorId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Title and authorId are required'
-        });
-      }
+            const post = await this.postService.getPostById(id)
+            if (!post) return response.notFound(res, 'Post not found')
 
-      const post = await this.postService.createPost({
-        title,
-        content,
-        published: published || false,
-        authorId
-      });
-
-      res.status(201).json({
-        success: true,
-        data: post
-      });
-    } catch (error) {
-      console.error('Error creating post:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error creating post'
-      });
+            return response.ok(res, post)
+        } catch (err) {
+            next(err)
+        }
     }
-  };
 
-  updatePost = async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid post ID'
-        });
-      }
+    createPost = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { title, content, published, authorId }: CreatePostDto =
+                req.body
+            if (!title || !authorId)
+                return response.badRequest(
+                    res,
+                    'Title and authorId are required'
+                )
 
-      const { title, content, published }: UpdatePostDto = req.body;
+            const post = await this.postService.createPost({
+                title,
+                content,
+                published: published || false,
+                authorId,
+            })
 
-      // Check if post exists
-      const existingPost = await this.postService.getPostById(id);
-      if (!existingPost) {
-        return res.status(404).json({
-          success: false,
-          message: 'Post not found'
-        });
-      }
-
-      const post = await this.postService.updatePost(id, {
-        title,
-        content,
-        published
-      });
-
-      res.json({
-        success: true,
-        data: post
-      });
-    } catch (error) {
-      console.error('Error updating post:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error updating post'
-      });
+            return response.created(res, post)
+        } catch (err) {
+            next(err)
+        }
     }
-  };
 
-  deletePost = async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid post ID'
-        });
-      }
+    updatePost = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const id = parseInt(req.params.id)
+            if (isNaN(id)) return response.badRequest(res, 'Invalid post ID')
 
-      // Check if post exists
-      const existingPost = await this.postService.getPostById(id);
-      if (!existingPost) {
-        return res.status(404).json({
-          success: false,
-          message: 'Post not found'
-        });
-      }
+            const { title, content, published }: UpdatePostDto = req.body
 
-      await this.postService.deletePost(id);
-      res.json({
-        success: true,
-        message: 'Post deleted successfully'
-      });
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error deleting post'
-      });
+            // Check if post exists
+            const existingPost = await this.postService.getPostById(id)
+            if (!existingPost) return response.notFound(res, 'Post not found')
+
+            const post = await this.postService.updatePost(id, {
+                title,
+                content,
+                published,
+            })
+
+            return response.ok(res, post)
+        } catch (err) {
+            next(err)
+        }
     }
-  };
 
-  getPostsByAuthor = async (req: Request, res: Response) => {
-    try {
-      const authorId = parseInt(req.params.authorId);
-      if (isNaN(authorId)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid author ID'
-        });
-      }
+    deletePost = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const id = parseInt(req.params.id)
+            if (isNaN(id)) return response.badRequest(res, 'Invalid post ID')
 
-      const posts = await this.postService.getPostsByAuthor(authorId);
-      res.json({
-        success: true,
-        data: posts
-      });
-    } catch (error) {
-      console.error('Error fetching posts by author:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error fetching posts by author'
-      });
+            // Check if post exists
+            const existingPost = await this.postService.getPostById(id)
+            if (!existingPost) return response.notFound(res, 'Post not found')
+
+            await this.postService.deletePost(id)
+            return response.ok(res, id)
+        } catch (err) {
+            next(err)
+        }
     }
-  };
 
-  getPublishedPosts = async (req: Request, res: Response) => {
-    try {
-      const posts = await this.postService.getPublishedPosts();
-      res.json({
-        success: true,
-        data: posts
-      });
-    } catch (error) {
-      console.error('Error fetching published posts:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error fetching published posts'
-      });
+    getPostsByAuthor = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) => {
+        try {
+            const authorId = parseInt(req.params.authorId)
+            if (isNaN(authorId))
+                return response.badRequest(res, 'Invalid author ID')
+
+            const posts = await this.postService.getPostsByAuthor(authorId)
+            return response.ok(res, posts)
+        } catch (err) {
+            next(err)
+        }
     }
-  };
+
+    getPublishedPosts = async (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) => {
+        try {
+            const posts = await this.postService.getPublishedPosts()
+            return response.ok(res, posts)
+        } catch (err) {
+            next(err)
+        }
+    }
 }
